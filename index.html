@@ -1,48 +1,58 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="utf-8">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заголовок страницы</title>
-    <link rel="stylesheet" href="./styles/style.css">
+    <title>Страница с картинкой</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #ff0000;
+        }
+        .container {
+            max-width: 600px;
+            background: rgb(255, 0, 0);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        /* Стили для рамки-заглушки */
+        .image-placeholder {
+            width: 100%;
+            height: 300px;
+            background-color: #e0e0e0;
+            border: 2px dashed #999;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        .image-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
 
-    <meta property="og:title" content="Заголовок страницы в OG">
-    <meta property="og:description" content="Описание страницы в OG">
-    <meta property="og:image" content="https://example.com/image.jpg">
-    <meta property="og:url" content="https://example.com/">
-  </head>
-  <body>
-    <header>
-      <h1>Личный сайт</h1>
-      <p>Который сделан на основе готового шаблона</p>
-      <nav>
-        <ul>
-          <li><a href="index.html">Эта страница</a></li>
-          <li><a href="catalog.html">Другая страница</a></li>
-        </ul>
-      </nav>
-    </header>
-    <main>
-      <article>
-        <section>
-          <h2>Первая секция</h2>
-          <p>Она обо мне</p>
-          <img src="images/image.png" alt="Человек и пароход">
-          <p>Но может быть и о семантике, я пока не решил.</p>
-        </section>
-        <section>
-          <h2>Вторая секция</h2>
-          <p>Она тоже обо мне</p>
-        </section>
-        <section>
-          <h2>И третья</h2>
-          <p>Вы уже должны были начать догадываться.</p>
-        </section>
-      </article>
-    </main>
-    <footer>
-      <p>Сюда бы я вписал информацию об авторе и ссылки на другие сайты</p>
-    </footer>
-    <!-- сюда можно подключить jquery <script src="scripts/app.js" defer></script> -->
-  </body>
+    <div class="container">
+        <h1>КИТАЙ ПАРТИЯ</h1>
+        <p>ВАМИ НЕДОВОЛЬНА.</p>
+
+                          
+        <div class="image-placeholder">
+            
+            <img src="https://s15.pikabu.ru/images/big_size_comm/2024-06_3/1718382091175631150.jpg" alt="КИТАЙ ПАРТИЯ ГОРДИТСЯ ТОБОЙ">
+        </div>
+
+        <p>МИ ЗАБРАТЬ ОДНА ВАША КОШКА ЖЕНА И ДАТЬ ОДНОГО ВАМ НАШ ДРАКОНА ВАС ОТПРАВЯТ НА ВОЙНУ С ТАЙВАНЕМ</p>
+    </div>
+
+</body>
 </html>
