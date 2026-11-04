@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+а<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
@@ -8,23 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --paper:#E9ECE6; --ink:#16262B; --muted:#5B6B6E; --line:#C9D0C8;
-    --card:#F6F7F3; --sb:#2E8B63; --fb:#D9922B; --danger:#B3402F;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; background:var(--paper); color:var(--ink);
-    font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
-    display:grid; place-items:center; padding:24px;
-  }
-  main{width:100%; max-width:440px}
-  h1{font-size:clamp(2rem,7vw,2.75rem); line-height:1.05; font-weight:800; letter-spacing:-.02em; margin:0 0 8px}
-  .lead{color:var(--muted); margin:0 0 28px; line-height:1.5}
-
-  .switch{display:grid; grid-template-columns:1fr 1fr; background:var(--line); border-radius:12px; padding:4px; gap:4px; margin-bottom:16px}
-  .switch button{
+  :root{аа  .switch button{
     font:inherit; font-weight:600; border:0; background:transparent; color:var(--muted);
     padding:11px 8px; border-radius:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
   }
@@ -59,6 +43,15 @@
 
   .msg{min-height:1.4em; margin:14px 2px 0; font-size:.92rem; color:var(--danger)}
   .msg.ok{color:var(--sb)}
+  .notes{border-top:1px solid var(--line); padding-top:14px; display:grid; gap:10px}
+  .notes h2{font-size:1.05rem; margin:0}
+  .add{display:flex; gap:8px}
+  .add input{flex:1; min-width:0; font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink)}
+  .add button{font:inherit; font-weight:600; padding:0 16px; border-radius:10px; border:0; background:var(--ink); color:#fff; cursor:pointer}
+  .list{list-style:none; margin:0; padding:0; display:grid; gap:8px}
+  .list li{display:flex; align-items:center; justify-content:space-between; gap:10px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; overflow-wrap:anywhere}
+  .list li button{font:inherit; border:0; background:transparent; color:var(--danger); cursor:pointer; font-weight:600}
+  .empty{color:var(--muted); font-size:.92rem}
   .hidden{display:none !important}
   @media (prefers-reduced-motion:no-preference){ .prov,.logout,.switch button{transition:background .15s,border-color .15s} }
 </style>
@@ -99,6 +92,15 @@
         </div>
       </div>
       <div class="meta" id="userMeta"></div>
+      <div class="notes">
+        <h2>Мои заметки (хранятся в базе данных)</h2>
+        <form class="add" id="addForm">
+          <input id="noteText" type="text" maxlength="300" placeholder="Новая заметка" aria-label="Новая заметка" required>
+          <button type="submit">Добавить</button>
+        </form>
+        <ul class="list" id="noteList"></ul>
+        <div class="empty hidden" id="noteEmpty">Пока нет заметок.</div>
+      </div>
       <button class="logout" id="logout">Выйти</button>
     </div>
   </section>
@@ -113,10 +115,10 @@ const SUPABASE_URL      = "https://YOUR-PROJECT.supabase.co";
 const SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY";
 
 const FIREBASE_CONFIG = {
-  apiKey: "YOUR-FIREBASE-API-KEY",
-  authDomain: "YOUR-PROJECT.firebaseapp.com",
-  projectId: "YOUR-PROJECT-ID",
-  appId: "YOUR-APP-ID"
+  apiKey: "AIzaSyAsbYDxbTMNdcQjrUI9_O6MNv9-vwjSNIc",
+  authDomain: "psina-687b9.firebaseapp.com",
+  projectId: "psina-687b9",
+  appId: "1:117680586779:web:40adbc82306159f584b8be"
 };
 
 /* ============================================================
@@ -128,12 +130,17 @@ import {
   getAuth, onAuthStateChanged, signOut as fbSignOut, signInWithPopup,
   GoogleAuthProvider, GithubAuthProvider, OAuthProvider
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {
+  getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 /* ============================================================
    3. ИНИЦИАЛИЗАЦИЯ
    ============================================================ */
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const fbAuth   = getAuth(initializeApp(FIREBASE_CONFIG));
+const fbApp    = initializeApp(FIREBASE_CONFIG);
+const fbAuth   = getAuth(fbApp);
+const db       = getFirestore(fbApp);
 
 const $ = id => document.getElementById(id);
 const msg = (text, ok=false) => { $("msg").textContent = text || ""; $("msg").className = "msg" + (ok ? " ok" : ""); };
@@ -189,11 +196,74 @@ function normalize(u, source) {
   if (!u) return null;
   if (source === "supabase") {
     const m = u.user_metadata || {};
-    return { name: m.full_name || m.name || m.user_name || "Без имени", email: u.email || "",
+    return { id: u.id, name: m.full_name || m.name || m.user_name || "Без имени", email: u.email || "",
              photo: m.avatar_url || m.picture || "", provider: (u.app_metadata && u.app_metadata.provider) || "" };
   }
-  return { name: u.displayName || "Без имени", email: u.email || "", photo: u.photoURL || "",
+  return { id: u.uid, name: u.displayName || "Без имени", email: u.email || "", photo: u.photoURL || "",
            provider: (u.providerData[0] && u.providerData[0].providerId || "").replace(".com","") };
+}
+
+/* ============================================================
+   БАЗА ДАННЫХ: заметки пользователя
+   Supabase  -> таблица public.notes
+   Firebase  -> Firestore: users/{uid}/notes
+   ============================================================ */
+let unsubNotes = null, lastKey = "";
+
+function renderNotes(items) {
+  const ul = $("noteList"); ul.textContent = "";
+  items.forEach(n => {
+    const li = document.createElement("li");
+    const t = document.createElement("span"); t.textContent = n.text;
+    const b = document.createElement("button"); b.type = "button"; b.textContent = "Удалить";
+    b.addEventListener("click", () => deleteNote(n.id));
+    li.append(t, b); ul.append(li);
+  });
+  $("noteEmpty").classList.toggle("hidden", items.length > 0);
+}
+
+async function loadNotes() {
+  if (unsubNotes) { unsubNotes(); unsubNotes = null; }
+  const u = state[backend];
+  if (!u) { renderNotes([]); return; }
+  try {
+    if (backend === "supabase") {
+      const { data, error } = await supabase.from("notes").select("id,text").order("created_at", { ascending: false });
+      if (error) throw error;
+      renderNotes(data);
+    } else {
+      const q = query(collection(db, "users", u.id, "notes"), orderBy("createdAt", "desc"));
+      unsubNotes = onSnapshot(q,
+        snap => renderNotes(snap.docs.map(d => ({ id: d.id, text: d.data().text }))),
+        e => msg(e.message));
+    }
+  } catch (e) { msg(e.message || String(e)); }
+}
+
+async function addNote(text) {
+  const u = state[backend]; if (!u) return;
+  try {
+    if (backend === "supabase") {
+      const { error } = await supabase.from("notes").insert({ text });
+      if (error) throw error;
+      await loadNotes();
+    } else {
+      await addDoc(collection(db, "users", u.id, "notes"), { text, createdAt: serverTimestamp() });
+    }
+  } catch (e) { msg(e.message || String(e)); }
+}
+
+async function deleteNote(id) {
+  const u = state[backend]; if (!u) return;
+  try {
+    if (backend === "supabase") {
+      const { error } = await supabase.from("notes").delete().eq("id", id);
+      if (error) throw error;
+      await loadNotes();
+    } else {
+      await deleteDoc(doc(db, "users", u.id, "notes", id));
+    }
+  } catch (e) { msg(e.message || String(e)); }
 }
 
 function render() {
@@ -202,6 +272,8 @@ function render() {
   const u = state[backend];
   $("signedOut").classList.toggle("hidden", !!u);
   $("signedIn").classList.toggle("hidden", !u);
+  const key = backend + ":" + (u ? u.id : "-");
+  if (key !== lastKey) { lastKey = key; loadNotes(); }
   if (!u) return;
   $("userName").textContent  = u.name;
   $("userEmail").textContent = u.email;
@@ -218,6 +290,13 @@ function render() {
    ============================================================ */
 document.querySelectorAll(".prov").forEach(b => b.addEventListener("click", () => signIn(b.dataset.provider)));
 $("logout").addEventListener("click", logout);
+$("addForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const input = $("noteText"), text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  await addNote(text);
+});
 for (const name of ["supabase", "firebase"]) {
   $("tab-" + name).addEventListener("click", () => {
     backend = name; localStorage.setItem("auth-backend", name); msg(""); render();
@@ -232,3 +311,4 @@ render();
 </script>
 </body>
 </html>
+
